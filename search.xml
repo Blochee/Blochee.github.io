@@ -4,24 +4,11 @@
   
     
     <entry>
-      <title>Hello World</title>
-      <link href="/2023/11/18/hello-world/"/>
-      <url>/2023/11/18/hello-world/</url>
+      <title>定时/计数器</title>
+      <link href="/2023/11/19/%E5%AE%9A%E6%97%B6-%E8%AE%A1%E6%95%B0%E5%99%A8/"/>
+      <url>/2023/11/19/%E5%AE%9A%E6%97%B6-%E8%AE%A1%E6%95%B0%E5%99%A8/</url>
       
-        <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><pre><code class="bash">$ hexo new &quot;My New Post&quot;</code></pre><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><pre><code class="bash">$ hexo server</code></pre><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><pre><code class="bash">$ hexo generate</code></pre><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><pre><code class="bash">$ hexo deploy</code></pre><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>My New Post</title>
-      <link href="/2023/11/18/My-New-Post/"/>
-      <url>/2023/11/18/My-New-Post/</url>
-      
-        <content type="html"><![CDATA[]]></content>
+        <content type="html"><![CDATA[<h1 id="第六章-定时计数器"><a href="#第六章-定时计数器" class="headerlink" title="第六章 定时计数器"></a>第六章 定时计数器</h1><h2 id="定时计数器的结构框图"><a href="#定时计数器的结构框图" class="headerlink" title="定时计数器的结构框图"></a>定时计数器的结构框图</h2><p><img src="/images/image-20231119152943798.png" alt="image-20231119152943798"></p><h2 id="定时器的控制字"><a href="#定时器的控制字" class="headerlink" title="定时器的控制字"></a>定时器的控制字</h2><h3 id="TMOD：工作方式控制寄存器（89H）"><a href="#TMOD：工作方式控制寄存器（89H）" class="headerlink" title="TMOD：工作方式控制寄存器（89H）"></a>TMOD：工作方式控制寄存器（89H）</h3><p><img src="/images/image-20231119153057581.png" alt="image-20231119153057581"></p><ol><li>GATE：门控位</li></ol><ul><li>GATE&#x3D;1，INT0引脚控制T0运行，INT1引脚控制T1运行，可测量这两引脚出现的正脉冲宽度</li><li>GATE&#x3D;0，定时计数器的运行不受外部引脚INT1或INT0的控制</li></ul><ol start="2"><li>C&#x2F;T：计数器模式和定时器模式的选择位</li></ol><ul><li>C&#x2F;T&#x3D;0时，定时器模式。每个机器周期定时器加一</li><li>C&#x2F;T&#x3D;1时，计数器模式。外部相应输入脚T0（p3.4）或T1（p3.5）产生下降沿时，计数器加一</li></ul><ol start="3"><li>M1、M0：工作方式 选择位</li></ol><table><thead><tr><th>M0</th><th align="left">M1</th><th>工作方式</th></tr></thead><tbody><tr><td>0</td><td align="left">0</td><td>方式0：TLX中低五位与THX中8位组成十三位计数器</td></tr><tr><td>1</td><td align="left">0</td><td>方式1：TLX与THX组成16位计数器</td></tr><tr><td>0</td><td align="left">1</td><td>方式2：常数自动重装载的8位计数器，相当于TLX溢出时，将THX中的内容赋给了TLX</td></tr><tr><td>1</td><td align="left">1</td><td>方式3：仅适用于T0，分成两个8位计数器，T1停止计数</td></tr></tbody></table><ol start="4"><li>注意：TMOD不能位寻址</li></ol><h3 id="TCON：控制寄存器（88H）"><a href="#TCON：控制寄存器（88H）" class="headerlink" title="TCON：控制寄存器（88H）"></a>TCON：控制寄存器（88H）</h3><p><img src="/images/image-20231119154859192.png" alt="image-20231119154859192"></p><ul><li><p>TF1：T1计数溢出标志位。由硬件控制，计数溢出时，由硬件置1。<strong>进入中断服务程序后被硬件自动清零</strong>。</p></li><li><p>TR1：T1计数运行控制位。由软件控制。</p><pre><code>当GATE位（TMOD.7）＝0时，若TR1=1，允许T1计数当GATE位=1时，TR1＝1且INT1=1时，允许T1计数</code></pre></li><li><p>TF0：T0计数溢出标志位，功能同TF1。</p></li><li><p>TR0：T0计数运行控制位，由软件置1或清0。</p><pre><code>当GATE位（TMOD.3）＝0时，若TR0=1，允许T0计数当GATE位=1时，TR0＝1且INT0=1时，允许T0计数。</code></pre></li></ul><h2 id="定时-计数器的四种工作方式"><a href="#定时-计数器的四种工作方式" class="headerlink" title="定时&#x2F;计数器的四种工作方式"></a>定时&#x2F;计数器的四种工作方式</h2><ol><li><p>T1工作在方式0的等效框图</p><p><img src="/images/image-20231119160056978.png" alt="image-20231119160056978"></p></li></ol><ul><li>GATE&#x3D;0时，A点始终为1，B点的控制始终由TR1决定</li><li>GATE&#x3D;1时，A点由INT1引脚控制，因此B点由TR1和INT1共同决定</li><li>C&#x2F;T低电平接内部时钟，高电平接外部引脚</li><li>方式1和方式0控制方式完全相同，只是一个是16位计数器，一个是13位计数器</li></ul><ol start="2"><li><p>T1工作在方式2等效框图</p><p><img src="/images/image-20231119160704137.png" alt="image-20231119160704137"></p></li></ol><ul><li>相当于自动赋初值，初值为TH1</li><li>该方式可以简化定时常数的计算方法（确定计数初值），可相当精确的确定定时时间，例：波特率发生器</li></ul><ol start="3"><li><p>工作于方式3的T0</p><p><img src="/images/image-20231119161137288.png" alt="image-20231119161137288"></p></li></ol><ul><li>TL0使用T0的状态控制位C&#x2F;T, GATE,TR0, INT0，而TH0被固定为一个8位定时器（不能作外部计数方式），并<strong>使用定时器T1的状态控制位TR1和TF1，同时占用定时器T1的中断源</strong>。</li><li>此时T1可以工作在方式0~2，但最好工作在方式2，经常做为串行口波特率发生器</li></ul><p><img src="/images/image-20231119161848107.png" alt="image-20231119161848107"></p><h2 id="定时-计数器的输入信号"><a href="#定时-计数器的输入信号" class="headerlink" title="定时&#x2F;计数器的输入信号"></a>定时&#x2F;计数器的输入信号</h2><h3 id="工作于定时器方式"><a href="#工作于定时器方式" class="headerlink" title="工作于定时器方式"></a>工作于定时器方式</h3><p>对内部时钟信号计数，内部时钟信号的频率为时钟振荡频率的1&#x2F;12，即每个机器周期计数值加1</p><h3 id="工作于计数器方式"><a href="#工作于计数器方式" class="headerlink" title="工作于计数器方式"></a>工作于计数器方式</h3><p>计数脉冲来自外部输入引脚T0或T1。当输入信号产生由1至0的跳变（即下跳变）时，计数器的值增1</p>]]></content>
       
       
       
